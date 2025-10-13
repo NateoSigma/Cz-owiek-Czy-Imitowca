@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>No, I'm not a Imitator</title>
+  <style>
+    body {
+      background-color: #0e0e10;
+      color: #f5f5f5;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #1b1b1f;
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0, 255, 150, 0.3);
+      width: 550px;
+      text-align: center;
+      transition: 0.5s;
+    }
+    h1,h2 { color: #00ffaa; }
+    button {
+      background: #00ffaa;
+      color: #0e0e10;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+      margin: 5px;
+    }
+    button:hover { background: #00cc88; }
+    .hidden { display: none; }
+    .character img {
+      width: 120px;
+      height: auto;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .dialogue { margin: 10px 0; font-size: 1.1em; }
+    .status { margin-top: 10px; font-size: 0.9em; color: #00ffaa; }
+    .counter { margin-bottom: 10px; font-size: 1em; color: #00ffaa; }
+  </style>
+</head>
+<body>
+  <div class="container" id="game">
+    <h1>No, I'm not a Imitator</h1>
+    <div class="counter" id="nightCounter">Przetrwane noce: 0</div>
+    <p>Gotowy na test? Sprawdźmy, kto jest człowiekiem, a kto imitowcem...</p>
+    <button id="startBtn">Start</button>
+  </div>
+
+  <script>
+    const charactersData = [
+      { name: "Grzegorz Gulczyk", img:"gulczyk.png", type:"human",
+        nightLines:["Hej! Długo cię nie widziałem.","Próbuję nauczyć się gotować.","To trudniejsze niż myślałem...","Chcesz spróbować mojego nowego przepisu?","Uwielbiam gotować w nocy!"],
+        dayLines:["Cześć, jak się spało?","Co dziś robimy?"] },
+      { name: "Czarek Cumer", img:"cumer.png", type:"imitator",
+        nightLines:["Yo! Co tam u ciebie?","Chcę pójść na spacer.","Trochę zimno, ale co tam!","Może pogramy w coś po cichu?","Czuję, że noc jest długa..."],
+        dayLines:["Hej, pamiętasz co mówiłem wczoraj?","Hmm, zastanawiam się..."] },
+      { name: "Kacper Rietz", img:"kacper.png", type:"human",
+        nightLines:["Hej, masz chwilę?","Chciałem zapytać o kota.","Zniknął wczoraj, może się schował?","Może pomożesz mi go szukać?","Uwielbiam obserwować nocne gwiazdy."],
+        dayLines:["Dzień dobry!","Chcesz pograć w coś?"] },
+      { name: "Michał Hm", img:"michał.png", type:"imitator",
+        nightLines:["Cześć człowieku!","Zastanawia mnie dlaczego ludzie ziewają.","To pewnie znudzenie.","Czasem mam dziwne myśli w nocy...","Zastanawiam się, co robisz w domu."],
+        dayLines:["Hej, jak minęła noc?","Masz coś do powiedzenia?"] },
+      { name: "Arkadiusz Jose", img:"ardiojosze.png", type:"human",
+        nightLines:["Hej! Dobrze cię widzieć.","Wczoraj oglądałem serial.","Chcesz porozmawiać?","Ciekawi mnie co robisz w nocy.","Mam kilka zabawnych historii."],
+        dayLines:["Dzień dobry! Co dziś robimy?","Może wspólna kawa?"] },
+      { name: "Szymon Reptair", img:"reptair.png", type:"imitator",
+        nightLines:["Witaj!","Ostatnio ćwiczę logikę.","Zastanawiam się nad twoją decyzją...","Czy mnie podejrzewasz?","Ciekawe, jak oceniasz innych."],
+        dayLines:["Dzień dobry!","Masz jakieś plany na dzisiaj?"] },
+      { name: "Szymon Szefcu", img:"szefcu.png", type:"human",
+        nightLines:["Cześć! Mam nadzieję, że mogę wejść.","Noc jest spokojna, prawda?","Lubię rozmawiać w ciszy.","Ciekaw jestem twoich decyzji.","Zawsze staram się być miły."],
+        dayLines:["Dzień dobry! Co dziś planujesz?","Może pogadamy o pracy?"] },
+      { name: "Max Kolega", img:"kolegamax.png", type:"human",
+        nightLines:["Hej, co słychać?","Chcę zobaczyć co robisz.","Noc jest długa, może pogadamy.","Lubię grać w gry w nocy.","Masz ochotę na rozmowę?"],
+        dayLines:["Dzień dobry!","Chcesz iść na spacer?"] },
+      { name: "Mateusz Gracho", img:"graacho.png", type:"imitator",
+        nightLines:["Cześć!","Obserwuję każdy ruch.","Czy mnie podejrzewasz?","Chcę wejść i porozmawiać.","Noc jest pełna tajemnic."],
+        dayLines:["Dzień dobry!","Masz jakieś plany na dzisiaj?"] }
+    ];
+
+    let nightQueue = [];
+    let invited = [];
+    let imitatorsInside = 0;
+    let nightCounter = 0;
+    let currentPhase = "night"; // night/day
+    let game = document.getElementById("game");
+    const startBtn = document.getElementById("startBtn");
+    const counterDisplay = document.getElementById("nightCounter");
+
+    startBtn.addEventListener("click", startNight);
+
+    function updateCounter() {
+      counterDisplay.textContent = `Przetrwane noce: ${nightCounter}`;
+    }
+
+    function startNight() {
+      currentPhase = "night";
+      nightCounter++;
+      updateCounter();
+      nightQueue = charactersData.filter(c => !invited.includes(c));
+      game.innerHTML = `<h2>Noc</h2><div id="status" class="status">Kto przyjdzie do domu?</div><div id="choices"></div><div id="dialogueBox" class="dialogue"></div><div class="character" id="charContainer"></div>`;
+      if(nightQueue.length === 0){
+        game.innerHTML = `<h2>Noc</h2><div class="status">Wszyscy w domu! Nastaje dzień.</div>`;
+        setTimeout(startDay, 3000);
+        return;
+      }
+      nextNightCharacter();
+    }
+
+    function nextNightCharacter() {
+      const status = document.getElementById("status");
+      const dialogueBox = document.getElementById("dialogueBox");
+      const choices = document.getElementById("choices");
+      const charContainer = document.getElementById("charContainer");
+
+      if(nightQueue.length === 0 || invited.length >= 3) {
+        startDay();
+        return;
+      }
+
+      const charIndex = Math.floor(Math.random() * nightQueue.length);
+      const char = nightQueue.splice(charIndex,1)[0];
+
+      charContainer.innerHTML = `<img src="${char.img}" alt="${char.name}"><h3>${char.name}</h3>`;
+      let lineIndex = 0;
+      dialogueBox.textContent = char.nightLines[lineIndex];
+
+      choices.innerHTML = `<button id="nextLineBtn">Dalej</button>`;
+      document.getElementById("nextLineBtn").addEventListener("click", () => {
+        lineIndex++;
+        if(lineIndex < char.nightLines.length){
+          dialogueBox.textContent = char.nightLines[lineIndex];
+        } else {
+          dialogueBox.textContent = `"Czy mogę wejść do domu?"`;
+          choices.innerHTML = `
+            <button id="yesBtn">Jasne, wejdź</button>
+            <button id="noBtn">Nie, nie możesz</button>
+          `;
+          document.getElementById("yesBtn").addEventListener("click", () => {
+            invited.push(char);
+            if(char.type === "imitator") imitatorsInside++;
+            dialogueBox.textContent = `${char.name} wchodzi do domu.`;
+            choices.innerHTML = "";
+
+            if(imitatorsInside >= 2){
+              dialogueBox.innerHTML = `⚠️ Wpuściłeś minimum 2 imitowców! Przegrałeś!`;
+              choices.innerHTML = `<button id="restartBtn">Zacznij od nowa</button>`;
+              document.getElementById("restartBtn").addEventListener("click", () => {
+                invited = [];
+                imitatorsInside = 0;
+                nightCounter = 0;
+                updateCounter();
+                startNight();
+              });
+              return;
+            }
+
+            setTimeout(nextNightCharacter, 5000);
+          });
+
+          document.getElementById("noBtn").addEventListener("click", () => {
+            dialogueBox.textContent = `${char.name} odchodzi...`;
+            choices.innerHTML = "";
+            setTimeout(nextNightCharacter, 5000);
+          });
+        }
+      });
+    }
+
+    function startDay(){
+      currentPhase = "day";
+      game.innerHTML = `<h2>Dzień</h2><div id="status" class="status">Rozmawiaj z gośćmi w domu:</div><div id="choices"></div><div id="dialogueBox" class="dialogue"></div><div class="character" id="charContainer"></div>`;
+      if(invited.length === 0){
+        document.getElementById("status").textContent = "Nie wpuściłeś nikogo. Noc się powtarza.";
+        setTimeout(startNight, 3000);
+        return;
+      }
+      dayTalk(0);
+    }
+
+    function dayTalk(index){
+      if(index >= invited.length){
+        game.innerHTML = `<h2>Noc nadchodzi...</h2><div class="status">Przygotuj się na kolejne wizyty.</div>`;
+        setTimeout(startNight, 3000);
+        return;
+      }
+
+      const char = invited[index];
+      const dialogueBox = document.getElementById("dialogueBox");
+      const choices = document.getElementById("choices");
+      const charContainer = document.getElementById("charContainer");
+
+      charContainer.innerHTML = `<img src="${char.img}" alt="${char.name}"><h3>${char.name}</h3>`;
+      let lineIndex = 0;
+      dialogueBox.textContent = char.dayLines[lineIndex];
+
+      choices.innerHTML = `<button id="nextLineBtn">Dalej</button>`;
+      document.getElementById("nextLineBtn").addEventListener("click", () => {
+        lineIndex++;
+        if(lineIndex < char.dayLines.length){
+          dialogueBox.textContent = char.dayLines[lineIndex];
+        } else {
+          dialogueBox.textContent = `Rozmowa zakończona z ${char.name}.`;
+          choices.innerHTML = `<button id="nextCharBtn">Następna osoba</button>`;
+          document.getElementById("nextCharBtn").addEventListener("click", () => {
+            dayTalk(index+1);
+          });
+        }
+      });
+    }
+
+  </script>
+</body>
+</html>
