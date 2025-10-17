@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>No, I'm not a Imitator</title>
+  <style>
+    body {
+      background-color: #0e0e10;
+      color: #f5f5f5;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #1b1b1f;
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0, 255, 150, 0.3);
+      width: 550px;
+      text-align: center;
+      transition: box-shadow 0.5s, background 0.5s;
+    }
+    .container.flash-green {
+      box-shadow: 0 0 40px rgba(0,255,150,0.8);
+      background: #132d22;
+    }
+    .container.flash-red {
+      box-shadow: 0 0 40px rgba(255,50,50,0.8);
+      background: #2d1313;
+    }
+    h1,h2 { color: #00ffaa; }
+    button {
+      background: #00ffaa;
+      color: #0e0e10;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+      margin: 5px;
+    }
+    button:hover { background: #00cc88; }
+    .character img {
+      width: 120px;
+      height: auto;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .dialogue { margin: 10px 0; font-size: 1.1em; }
+    .status { margin-top: 10px; font-size: 0.9em; color: #00ffaa; }
+    video {
+      width: 100%;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="game">
+    <h1>No, I'm not a Imitator</h1>
+    <p>Sprawdź, kogo wpuścisz do domu. Czy odróżnisz człowieka od imitatora?</p>
+    <button id="startBtn">Start</button>
+  </div>
+
+  <script>
+const charactersDataOriginal = [
+  { name: "Grzegorz Gulczyk", img:"gulczyk.png", type:"human",
+    nightLines:["Hej! Długo cię nie widziałem.","Próbuję nauczyć się gotować.","Uwielbiam gotować w nocy!"],
+    talkLines:["Gotujesz coś teraz?","Znasz jakieś dobre przepisy?","Czuję, że mógłbyś być moim pomocnikiem w kuchni!"] },
+  { name: "Czarek Cumer", img:"cumer.png", type:"imitator",
+    nightLines:["Yo! Co tam u ciebie?","Trochę zimno, ale co tam!","Czuję, że noc jest długa..."],
+    talkLines:["Nie lubię ciszy.","A ty lubisz noc?","Czasem zastanawiam się, czym jest sen."] },
+  { name: "Kacper Rietz", img:"kacper.png", type:"human",
+    nightLines:["Hej, masz chwilę?","Zniknął mój kot...","Uwielbiam obserwować nocne gwiazdy."],
+    talkLines:["Koty to najlepsi przyjaciele.","Lubisz patrzeć w gwiazdy?","Cisza w nocy jest piękna."] },
+  { name: "Michał Hm", img:"michał.png", type:"imitator",
+    nightLines:["Cześć człowieku!","Zastanawia mnie dlaczego ludzie ziewają.","Czasem mam dziwne myśli w nocy..."],
+    talkLines:["A co to jest emocja?","Czy boisz się ciemności?","Ciekawe... bardzo ciekawe."] },
+  { name: "Arkadiusz Jose", img:"ardiojosze.png", type:"human",
+    nightLines:["Hej! Dobrze cię widzieć.","Wczoraj oglądałem serial.","Mam kilka zabawnych historii."],
+    talkLines:["Znasz ten serial?","Może opowiem ci coś śmiesznego.","Lubię kręcić filmiki."] },
+  { name: "Szymon Reptair", img:"reptair.png", type:"imitator",
+    nightLines:["Witaj!","Ostatnio ćwiczę logikę.","Czy mnie podejrzewasz?"],
+    talkLines:["Czy kłamstwo to wada?","Jak rozpoznajesz prawdę?","Zastanawiam się, czy ty też analizujesz ludzi."] },
+  { name: "Szymon Szefcu", img:"szefcu.png", type:"human",
+    nightLines:["Cześć! Mam nadzieję, że mogę wejść.","Lubię rozmawiać w ciszy.","Zawsze staram się być miły."],
+    talkLines:["Lubię ludzi, którzy słuchają.","Nie jestem nachalny, prawda?","Kiedyś chciałbym napisać książkę."] },
+  { name: "Max Kolega", img:"kolegamax.png", type:"human",
+    nightLines:["Hej, co słychać?","Noc jest długa, może pogadamy.","Masz ochotę na rozmowę?"],
+    talkLines:["Lubię grać w planszówki.","Nie lubię siedzieć sam.","Masz dobrą energię."] },
+  { name: "Mateusz Gracho", img:"graacho.png", type:"imitator",
+    nightLines:["Cześć!","Obserwuję każdy ruch.","Noc jest pełna tajemnic."],
+    talkLines:["Znasz to uczucie, gdy ktoś cię obserwuje?","Nie wszyscy są tym, kim się wydają.","Lubię analizować ludzi."] },
+  { name: "Maciej Arquel", img:"arquel.png", type:"imitator",
+    nightLines:["Dobry wieczór...","Nie mogłem przestać o tobie myśleć.","Pozwól mi wejść — chcę tylko chwilę porozmawiać."],
+    talkLines:["Czy ufasz mi?","Czuję, że mamy więź.","Lubię cię słuchać."] },
+  { name: "Adam Wrona", img:"wrona7.png", type:"human",
+    nightLines:["Hej! Znowu nie mogłem zasnąć.","Uwielbiam nocne rozmowy.","Wpuścisz mnie na chwilę?"],
+    talkLines:["Nie mogę spać bez rozmowy.","Lubię cię słuchać.","Czasem noc wydaje się wieczna."] }
+];
+
+let charactersData = [];
+let currentIndex = 0;
+let invitedHumans = 0;
+let invitedImitators = 0;
+
+const game = document.getElementById("game");
+const startBtn = document.getElementById("startBtn");
+
+startBtn.addEventListener("click", startGame);
+
+function shuffleArray(array) {
+  return array.sort(() => Math.random() - 0.5);
+}
+
+function startGame() {
+  charactersData = shuffleArray([...charactersDataOriginal]); // losowa kolejność
+  currentIndex = 0;
+  invitedHumans = 0;
+  invitedImitators = 0;
+  nextCharacter();
+}
+
+function nextCharacter() {
+  if (currentIndex >= charactersData.length) {
+    showSummary();
+    return;
+  }
+
+  const char = charactersData[currentIndex];
+  let lineIndex = 0;
+
+  game.innerHTML = `
+    <h2>${char.name}</h2>
+    <div class="character"><img src="${char.img}" alt="${char.name}"></div>
+    <div class="dialogue" id="dialogueBox">${char.nightLines[lineIndex]}</div>
+    <div id="choices">
+      <button id="nextLineBtn">Dalej</button>
+    </div>
+  `;
+
+  const dialogueBox = document.getElementById("dialogueBox");
+  const choices = document.getElementById("choices");
+
+  document.getElementById("nextLineBtn").addEventListener("click", () => {
+    lineIndex++;
+    if (lineIndex < char.nightLines.length) {
+      dialogueBox.textContent = char.nightLines[lineIndex];
+    } else {
+      dialogueBox.textContent = "Chcesz jeszcze chwilę porozmawiać?";
+      choices.innerHTML = `
+        <button id="talkBtn">Porozmawiaj</button>
+        <button id="decideBtn">Podejmij decyzję</button>
+      `;
+      document.getElementById("talkBtn").addEventListener("click", () => talkSequence(char));
+      document.getElementById("decideBtn").addEventListener("click", () => {
+        if (char.name === "Arkadiusz Jose") showArkadiuszChoice(char);
+        else askToEnter(char);
+      });
+    }
+  });
+}
+
+function talkSequence(char) {
+  const dialogueBox = document.getElementById("dialogueBox");
+  const choices = document.getElementById("choices");
+  let step = 0;
+
+  dialogueBox.textContent = char.talkLines[step];
+  choices.innerHTML = `<button id="nextTalkBtn">Dalej</button>`;
+
+  document.getElementById("nextTalkBtn").addEventListener("click", () => {
+    step++;
+    if (step < char.talkLines.length) {
+      dialogueBox.textContent = char.talkLines[step];
+    } else {
+      dialogueBox.textContent = "To była ciekawa rozmowa.";
+      choices.innerHTML = `<button id="decideBtn">Podejmij decyzję</button>`;
+      document.getElementById("decideBtn").addEventListener("click", () => {
+        if (char.name === "Arkadiusz Jose") showArkadiuszChoice(char);
+        else askToEnter(char);
+      });
+    }
+  });
+}
+
+function showArkadiuszChoice(char) {
+  const dialogueBox = document.getElementById("dialogueBox");
+  const choices = document.getElementById("choices");
+
+  dialogueBox.textContent = "Hej, chcesz zobaczyć mój filmik?";
+  choices.innerHTML = `
+    <button id="yesVideoBtn">Tak</button>
+    <button id="noVideoBtn">Nie</button>
+  `;
+  document.getElementById("yesVideoBtn").addEventListener("click", () => {
+    dialogueBox.innerHTML = `<video src="filmik001.mp4" controls autoplay></video>`;
+    choices.innerHTML = `<button id="continueBtn">Dalej</button>`;
+    document.getElementById("continueBtn").addEventListener("click", () => askToEnter(char));
+  });
+  document.getElementById("noVideoBtn").addEventListener("click", () => {
+    dialogueBox.textContent = "Może innym razem!";
+    choices.innerHTML = `<button id="continueBtn">Dalej</button>`;
+    document.getElementById("continueBtn").addEventListener("click", () => askToEnter(char));
+  });
+}
+
+function askToEnter(char) {
+  const dialogueBox = document.getElementById("dialogueBox");
+  const choices = document.getElementById("choices");
+
+  dialogueBox.textContent = `"Czy mogę wejść do domu?"`;
+  choices.innerHTML = `
+    <button id="yesBtn">Wpuść</button>
+    <button id="noBtn">Odmów</button>
+  `;
+
+  document.getElementById("yesBtn").addEventListener("click", () => {
+    if (char.type === "human") invitedHumans++;
+    else invitedImitators++;
+    flash("green");
+    dialogueBox.textContent = `${char.name} wchodzi do domu.`;
+    choices.innerHTML = "";
+    setTimeout(() => { currentIndex++; nextCharacter(); }, 2000);
+  });
+
+  document.getElementById("noBtn").addEventListener("click", () => {
+    flash("red");
+    dialogueBox.textContent = `${char.name} odchodzi...`;
+    choices.innerHTML = "";
+    setTimeout(() => { currentIndex++; nextCharacter(); }, 2000);
+  });
+}
+
+function flash(color) {
+  game.classList.add(color === "green" ? "flash-green" : "flash-red");
+  setTimeout(() => {
+    game.classList.remove("flash-green", "flash-red");
+  }, 800);
+}
+
+function showSummary() {
+  game.innerHTML = `
+    <h2>Podsumowanie</h2>
+    <p>Wpuściłeś:</p>
+    <p>👤 Ludzi: <strong>${invitedHumans}</strong></p>
+    <p>🧬 Imitatorów: <strong>${invitedImitators}</strong></p>
+    <button id="restartBtn">Zagraj ponownie</button>
+  `;
+  document.getElementById("restartBtn").addEventListener("click", startGame);
+}
+  </script>
+</body>
+</html>
